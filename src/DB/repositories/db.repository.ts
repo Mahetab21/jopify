@@ -56,27 +56,33 @@ export abstract class DbRepository < TDocument > {
     query,
     projection,
     options,
+    sort,
+    populate,
   }: {
     filter: RootFilterQuery<TDocument>;
     query: { page: number; limit: number };
     projection?: ProjectionType<TDocument>;
     options?: QueryOptions<TDocument>;
+    sort?: Record<string, 1 | -1>;                          
+    populate?: { path: string; select: string };            
   }) {
-    let { page, limit = 2 } = query;
+    let { page, limit = 10 } = query;
 
-    if (page < 0) page = 1;
-    page = page * 1 || 1;
+    if (page < 0) page = 1;//if page is negative, set it to 1
+    page = page * 1 || 1; //convert page to number and set default to 1
     const skip = (page - 1) * limit;
     const finalOptions = {
       ...options,
       skip,
       limit,
     };
-    const count = await this.model.countDocuments({
-      deletedAt: { $exists: false },
-    });
+    const count = await this.model.countDocuments(filter);
     const numberOfPages = Math.ceil(count / limit);
-    const docs = await this.model.find(filter, projection, finalOptions);
+    let queryBuilder = this.model.find(filter, projection, finalOptions);
+    if (sort) queryBuilder = queryBuilder.sort(sort) as any;
+    if (populate) queryBuilder = queryBuilder.populate(populate.path, populate.select) as any;
+
+  const docs = await queryBuilder.lean();
     return { docs, currentPage: page, countDocument: count, numberOfPages };
   }
   async findOneAndDelete(

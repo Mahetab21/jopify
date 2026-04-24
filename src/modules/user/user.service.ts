@@ -94,7 +94,7 @@ class UserService {
     const { email, password }: signInSchemaType = req.body;
     const user = await this._userModel.findOne({
       email,
-      confirmed: { $exists: true },
+      confirmed: true,
       provider: ProviderType.system,
     });
     if (!user) {
@@ -239,7 +239,7 @@ class UserService {
     const hash = await Hash(password);
     await this._userModel.updateOne(
       { email: user?.email },
-      { password: hash, $unset: { otp: "" } }
+      { password: hash, $unset: { otp: "" }, changeCredentials: new Date() }
     );
     return res.status(200).json({ message: "Password reset successfully" });
   };
@@ -274,14 +274,16 @@ class UserService {
   updateBasicInfo = async (req: Request, res: Response, next: NextFunction) => {
     const updateData: updateBasicInfoSchemaType = req.body;
     if (updateData.userName) {
+      const [firstName, lastName] = updateData.userName.split(" ");
       const existingUser = await this._userModel.findOne({
-        userName: updateData.userName,
+        firstName,
+        lastName,
         _id: { $ne: req.user?._id },
       });
-      if (existingUser) {
-        throw new AppError("Username already exists", 409);
-      }
+    if (existingUser) {
+      throw new AppError("Username already exists", 409);
     }
+  }
     const updatedUser = await this._userModel.findOneAndUpdate(
       { _id: req.user?._id },
       { $set: updateData },
@@ -531,7 +533,7 @@ class UserService {
   //================== saveJob==================
   saveJob = async (req: Request, res: Response, next: NextFunction) => {
     const { jobId } = req.params;
-    const job = await this._jobModel.findOne({jobId});
+    const job = await this._jobModel.findOne({ _id: jobId });
     if (!job) {
       throw new AppError("Job not found", 404);
     }

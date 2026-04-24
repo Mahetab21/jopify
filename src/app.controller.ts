@@ -8,6 +8,7 @@ import { rateLimit } from "express-rate-limit";
 import { AppError } from "./utils/classError";
 import userRouter from "./modules/user/user.controller";
 import connectionDB from "./DB/connectionDB";
+import JobRouter from "./modules/job/job.controller";
 const app: express.Application = express();
 const port: string | number = process.env.PORT || 5000;
 const limiter = rateLimit({
@@ -35,6 +36,7 @@ const bootstrap = async () => {
     return res.status(200).json({message: "Server is up and running... welcome to my Jopify app!",});
   });
   app.use("/users" , userRouter);
+  app.use("/jobs" , JobRouter);
   await connectionDB();
   app.use("{/*demo}", (req: Request, res: Response, next: NextFunction) => {
     throw new AppError(`Invalid Url ${req.originalUrl}`, 404);

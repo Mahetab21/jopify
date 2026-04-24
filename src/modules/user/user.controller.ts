@@ -11,10 +11,10 @@ userRouter.post("/signUp" ,Validation(UV.signUpSchema), US.signUp)
 userRouter.post("/confirmEmail" ,Validation(UV.confirmEmailSchema), US.confirmEmail)
 userRouter.post("/signIn", Validation(UV.signInSchema), US.signIn);
 userRouter.post("/logInWithGmail", Validation(UV.logInWithGmailSchema), US.logInWithGmail);
-userRouter.post("/logOut",Authentication(),Validation(UV.logOutSchema), US.logOut);
+userRouter.post("/logOut",Authentication(TokenType.access),Validation(UV.logOutSchema), US.logOut);
 userRouter.patch("/forgetPassword",Validation(UV.forgetPasswordSchema), US.forgetPassword);
 userRouter.patch("/resetPassword",Validation(UV.resetPasswordSchema), US.resetPassword);
-userRouter.get("/getProfile", Authentication(), US.getProfile);
+userRouter.get("/getProfile", Authentication(TokenType.access), US.getProfile);
 userRouter.put("/updateBasicInfo",
   Authentication(TokenType.access),
   Validation(UV.updateBasicInfoSchema),
