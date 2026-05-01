@@ -71,7 +71,7 @@ class JobService {
           message: "Job updated successfully",
           job: updatedJob,
         });
-    };
+  };
   // ================== Delete Job (Soft Delete) ==================
   deleteJob = async (req: Request, res: Response, next: NextFunction) => {
         const { jobId }  = req.params as DeleteJobSchemaType;
@@ -107,7 +107,7 @@ class JobService {
           message: "Job deleted successfully",
           job: deletedJob,
         });
-    };
+  };
   // ================== Get All Jobs (with filters) ==================
   getAllJobs = async (req: Request, res: Response, next: NextFunction) => {
     const {
@@ -201,8 +201,29 @@ class JobService {
     },
     jobs: result.docs,
   });
- };
+  };
+ //================== Delete Job================================
+  hardDeleteJob = async (req: Request, res: Response, next: NextFunction) => {
+  const { jobId } = req.params;
+  const job = await this._jobModel.findOne({ _id: jobId });
 
+  if (!job) {
+    throw new AppError("Job not found", 404);
+  }
+
+  if (
+    job.postedBy.toString() !== req.user?._id?.toString() &&
+    req.user?.role !== RoleType.admin
+  ) {
+    throw new AppError("You are not authorized to delete this job", 403);
+  }
+
+  await this._jobModel.deleteOne({ _id: jobId });
+
+  return res.status(200).json({
+    message: "Job deleted successfully",
+  });
+ };
   // ================== Search Jobs by Skills ==================
   // searchJobsBySkills = async (req: Request, res: Response, next: NextFunction) => {
     //   try {

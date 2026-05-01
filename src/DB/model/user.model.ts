@@ -4,7 +4,6 @@ export enum RoleType {
     job_seeker = "job_seeker",
     employer = "employer",
     admin = "admin",
-    user = "user",
 }
 export enum GenderType{
     male="male",

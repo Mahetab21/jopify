@@ -47,8 +47,14 @@ JobRouter.get(
 );
 // GET /jobs/:jobId - Get single job
 JobRouter.get("/:jobId", Validation(JV.getJobByIdSchema), JS.getJobById);
-
-
+// delete /jobs/:jobId - delete job (hard delete)
+JobRouter.delete(
+  "/hard-delete/:jobId",
+  Authentication(TokenType.access),
+  authorization([RoleType.employer, RoleType.admin]),
+  Validation(JV.deleteJobSchema),
+  JS.hardDeleteJob,
+);
 // // GET /jobs/search - Search jobs
 // JobRouter.get("/search", Validation(JV.searchJobsSchema), JS.searchJobs);
 
