@@ -107,7 +107,7 @@ class UserService {
     const access_token = await GenerateToken({
       payload: { id: user._id, email: user.email },
       signature:
-        user.role === RoleType.user
+        user.role === RoleType.job_seeker
           ? process.env.ACCESS_TOKEN_USER!
           : process.env.ACCESS_TOKEN_ADMIN!,
       options: { expiresIn: "1d", jwtid },
@@ -116,7 +116,7 @@ class UserService {
     const refresh_token = await GenerateToken({
       payload: { id: user._id, email: user.email },
       signature:
-        user.role === RoleType.user
+        user.role === RoleType.job_seeker
           ? process.env.REFRESH_TOKEN_USER!
           : process.env.REFRESH_TOKEN_ADMIN!,
       options: { expiresIn: "1y", jwtid },
@@ -163,7 +163,7 @@ class UserService {
     const access_token = await GenerateToken({
       payload: { id: user._id, email: user.email },
       signature:
-        user.role === RoleType.user
+        user.role === RoleType.job_seeker
           ? process.env.ACCESS_TOKEN_USER!
           : process.env.ACCESS_TOKEN_ADMIN!,
       options: { expiresIn: "1d", jwtid },
@@ -172,7 +172,7 @@ class UserService {
     const refresh_token = await GenerateToken({
       payload: { id: user._id, email: user.email },
       signature:
-        user.role === RoleType.user
+        user.role === RoleType.job_seeker
           ? process.env.REFRESH_TOKEN_USER!
           : process.env.REFRESH_TOKEN_ADMIN!,
       options: { expiresIn: "1y", jwtid },

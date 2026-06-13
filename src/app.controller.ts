@@ -10,6 +10,7 @@ import userRouter from "./modules/user/user.controller";
 import connectionDB from "./DB/connectionDB";
 import JobRouter from "./modules/job/job.controller";
 import JobApplicationsRouter from "./modules/JobApplications/jobApplications.controller";
+import messageRouter from "./modules/message/message.controller";
 const app: express.Application = express();
 const port: string | number = process.env.PORT || 5000;
 const limiter = rateLimit({
@@ -39,6 +40,7 @@ const bootstrap = async () => {
   app.use("/users" , userRouter);
   app.use("/jobs" , JobRouter);
   app.use("/job-applications" , JobApplicationsRouter);
+  app.use("/messages" , messageRouter);
   await connectionDB();
   app.use("{/*demo}", (req: Request, res: Response, next: NextFunction) => {
     throw new AppError(`Invalid Url ${req.originalUrl}`, 404);
