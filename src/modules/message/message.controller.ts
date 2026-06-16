@@ -34,10 +34,6 @@ messageRouter.put(
   Validation(MV.markMessageReadSchema),
   MS.markMessageRead,
 );
-// PUT /messages/676f1234567890abcdef1234/read
-// Headers:
-//   Authorization: Bearer <access_token>
-// Body: none
 //=============================delete message  =========================
 messageRouter.delete(
   "/:messageId",
@@ -45,9 +41,5 @@ messageRouter.delete(
   Validation(MV.deleteMessageSchema),
   MS.deleteMessage,
 );
-// DELETE /messages/676f1234567890abcdef1234
-// Headers:
-//   Authorization: Bearer <access_token>
-// Body: none
 
 export default messageRouter;

@@ -11,6 +11,8 @@ import connectionDB from "./DB/connectionDB";
 import JobRouter from "./modules/job/job.controller";
 import JobApplicationsRouter from "./modules/JobApplications/jobApplications.controller";
 import messageRouter from "./modules/message/message.controller";
+import { createServer } from "http";
+import { initSocket } from "./socket/socket";
 const app: express.Application = express();
 const port: string | number = process.env.PORT || 5000;
 const limiter = rateLimit({
@@ -47,9 +49,13 @@ const bootstrap = async () => {
   });
 
 
-  app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
-  });
+ const httpServer = createServer(app);
+
+ initSocket(httpServer);
+
+ httpServer.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
+ });
 
 }
 export default bootstrap;

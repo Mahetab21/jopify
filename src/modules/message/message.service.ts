@@ -6,6 +6,8 @@ import { AppError } from "../../utils/classError";
 import { GetConversationsSchemaType, SendMessageSchemaType } from "./message.validation";
 import { Types } from "mongoose";
 import messageModel, { IMessage, MessageStatus } from "../../DB/model/message.model";
+import { getIO } from "../../socket/socketInstance";
+import onlineUsers from "../../socket/onlineUsers";
 class MessageService {
   private _messageModel = new MessageRepository(messageModel);
   private _userModel = new UserRepository(userModel);
@@ -39,7 +41,18 @@ class MessageService {
       { path: "receiverId", select: "firstName lastName profileImage" },
     ]);
 
-    return res.status(201).json({
+
+  const io = getIO();
+  const receiverSocketId = onlineUsers.get(receiverId);
+  if (receiverSocketId) {
+  io.to(receiverSocketId).emit("new-message", message);
+   }
+  await this._messageModel.findOneAndUpdate(
+    { _id: message._id },
+    { $set: { status: MessageStatus.delivered } }
+  );
+
+  return res.status(201).json({
       message: "Message sent successfully",
       data: message,
     });
@@ -198,7 +211,10 @@ class MessageService {
       total_count: total,
       limit,
     },
-    otherUser,
+    otherUser: {
+    ...otherUser.toObject(),
+    isOnline: onlineUsers.has(otherUser._id.toString()), 
+  },
     messages: (messages as any[]).reverse(),
   });
   };
@@ -213,12 +229,12 @@ class MessageService {
     throw new AppError("Message not found", 404);
   }
 
-  // بس الـ receiver هو اللي يقدر يعمل read
+  // the recever who can only make read
   if (message.receiverId.toString() !== userId?.toString()) {
     throw new AppError("You are not authorized to mark this message as read", 403);
   }
 
-  // لو بالفعل read مش محتاج تعمل update
+  //if it aleady read return message with status 200
   if (message.status === MessageStatus.read) {
     return res.status(200).json({
       message: "Message already marked as read",
@@ -231,6 +247,14 @@ class MessageService {
     { $set: { status: MessageStatus.read } },
     { new: true }
   );
+  const io = getIO();
+  const senderSocketId = onlineUsers.get(message.senderId.toString());
+ if (senderSocketId) {
+  io.to(senderSocketId).emit("message-seen", {
+    messageId,
+    by: userId,
+  });
+ }
 
   return res.status(200).json({
     message: "Message marked as read successfully",
@@ -248,15 +272,14 @@ deleteMessage = async (req: Request, res: Response, next: NextFunction) => {
     throw new AppError("Message not found", 404);
   }
 
-  // تأكد إن الـ user طرف في الرسالة
+  //ensure that the user is either sender or receiver of the message
   const isSender = message.senderId.toString() === userId?.toString();
   const isReceiver = message.receiverId.toString() === userId?.toString();
 
   if (!isSender && !isReceiver) {
     throw new AppError("You are not authorized to delete this message", 403);
   }
-
-  // لو sender - اعمل soft delete من عنده
+   
   if (isSender) {
     await this._messageModel.findOneAndUpdate(
       { _id: messageId },
@@ -264,7 +287,6 @@ deleteMessage = async (req: Request, res: Response, next: NextFunction) => {
     );
   }
 
-  // لو receiver - اعمل soft delete من عنده
   if (isReceiver) {
     await this._messageModel.findOneAndUpdate(
       { _id: messageId },

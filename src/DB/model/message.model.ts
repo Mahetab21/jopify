@@ -47,6 +47,6 @@ export default messageModel;
 
 // POST /messages/send   DONE
 // GET /messages/conversations DONE
-// GET /messages/conversation/:userId
-// PUT /messages/:messageId/read
-// DELETE /messages/:messageId
+// GET /messages/conversation/:userId DONE
+// PUT /messages/:messageId/read DONE
+// DELETE /messages/:messageId DONE
