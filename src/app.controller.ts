@@ -13,6 +13,7 @@ import JobApplicationsRouter from "./modules/JobApplications/jobApplications.con
 import messageRouter from "./modules/message/message.controller";
 import { createServer } from "http";
 import { initSocket } from "./socket/socket";
+import globalError from "./middleware/globalError";
 const app: express.Application = express();
 const port: string | number = process.env.PORT || 5000;
 const limiter = rateLimit({
@@ -44,9 +45,13 @@ const bootstrap = async () => {
   app.use("/job-applications" , JobApplicationsRouter);
   app.use("/messages" , messageRouter);
   await connectionDB();
-  app.use("{/*demo}", (req: Request, res: Response, next: NextFunction) => {
-    throw new AppError(`Invalid Url ${req.originalUrl}`, 404);
+  // app.use("*", (req: Request, res: Response, next: NextFunction) => {
+  //   throw new AppError(`Invalid Url ${req.originalUrl}`, 404);
+  // });
+  app.use("/{*any}", (req: Request, res: Response, next: NextFunction) => {
+  next(new AppError(`Invalid Url ${req.originalUrl}`, 404));
   });
+  app.use(globalError);
 
 
  const httpServer = createServer(app);
