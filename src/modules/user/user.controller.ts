@@ -7,8 +7,12 @@ import { TokenType } from "../../utils/token";
 import { fileValidation, multerCloud } from "../../middleware/multer.cloud";
 const userRouter = Router();
 
-userRouter.post("/signUp" ,Validation(UV.signUpSchema), US.signUp)
-userRouter.post("/confirmEmail" ,Validation(UV.confirmEmailSchema), US.confirmEmail)
+userRouter.post(
+  "/signUp",
+  multerCloud({ fileTypes: fileValidation.image }).single("profileImage"),
+  Validation(UV.signUpSchema),
+  US.signUp
+);userRouter.post("/confirmEmail" ,Validation(UV.confirmEmailSchema), US.confirmEmail)
 userRouter.post("/signIn", Validation(UV.signInSchema), US.signIn);
 userRouter.post("/logInWithGmail", Validation(UV.logInWithGmailSchema), US.logInWithGmail);
 userRouter.post("/logOut",Authentication(TokenType.access),Validation(UV.logOutSchema), US.logOut);

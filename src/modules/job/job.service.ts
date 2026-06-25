@@ -11,23 +11,34 @@ import {
   DeleteJobSchemaType,
   GetMyJobsQuerySchemaType,
 } from "./job.validation";
+import { uploadFile } from "../../utils/s3.config";
 
 class JobService {
   private _jobModel = new JobRepository(jobModel);
   constructor() {}
 
   // ================== Create Job ==================
-  createJob = async (req: Request, res: Response, next: NextFunction) => {
+ createJob = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.user?._id;
   if (!userId) {
     throw new AppError("User not authenticated", 401);
   }
+
   const { companySnapshot, ...rest }: CreateJobSchemaType = req.body;
+
+  let logoKey: string | undefined;
+  if (req.file) {
+    logoKey = await uploadFile({
+      path: `companies/logos/${userId}`,
+      file: req.file,
+    });
+  }
+
   const job = await this._jobModel.create({
     ...rest,
     companySnapshot: {
       name: companySnapshot.name,
-      logo: companySnapshot.logo ?? undefined,
+      ...(logoKey && { logo: logoKey }),
     } as IJob["companySnapshot"],
     postedBy: userId,
     status: Status.active,
@@ -38,7 +49,7 @@ class JobService {
     message: "Job posted successfully",
     job,
   });
-  };
+};
   // ================== Update Job ==================
   updateJob = async (req: Request, res: Response, next: NextFunction) => {
         const { jobId } = req.params;

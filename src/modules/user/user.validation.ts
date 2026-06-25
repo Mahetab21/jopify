@@ -6,26 +6,25 @@ export enum flagType {
 }
 export const signUpSchema = {
   body: z.strictObject({
-      firstName: z.string().min(2).max(100).trim(),
-      lastName: z.string().min(2).max(100).trim(),
-      email: z.email(),
-      password: z.string().regex(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/),
-      cPassword: z.string(),
-      age: z.number().min(18).max(60),
-      location: z.string(),
-      phoneNumber: z.string(),
-      role: z.enum([RoleType.admin, RoleType.job_seeker , RoleType.employer]).default(RoleType.job_seeker),
-      gender: z.enum([GenderType.female, GenderType.male]),
-    }).required().superRefine((data, ctx) => {
-      console.log(data, ctx);
-      if (data.password !== data.cPassword) {
-        ctx.addIssue({
-          code: "custom",
-          path: ["cPassword"],
-          message: "Password and confirm password must be the same",
-        });
-      }
-    }),
+    firstName: z.string().min(2).max(100).trim(),
+    lastName: z.string().min(2).max(100).trim(),
+    email: z.email(),
+    password: z.string().regex(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/),
+    cPassword: z.string(),
+    age: z.coerce.number().min(18).max(60),  // ← coerce
+    location: z.string(),
+    phoneNumber: z.string(),
+    role: z.enum([RoleType.admin, RoleType.job_seeker, RoleType.employer]).default(RoleType.job_seeker),
+    gender: z.enum([GenderType.female, GenderType.male]),
+  }).required().superRefine((data, ctx) => {
+    if (data.password !== data.cPassword) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["cPassword"],
+        message: "Password and confirm password must be the same",
+      });
+    }
+  }),
 };
 export const confirmEmailSchema = {
   body: z.strictObject({

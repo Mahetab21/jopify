@@ -9,15 +9,11 @@ export const Validation = (schema: SchemaType) => {
     const validationError: z.ZodError[] = [];
     for (const key of Object.keys(schema) as ReqType[]) {
       if (!schema[key]) continue;
-      // if(req?.file){
-      //     req.body.attachments=req.file;
-      // }
-      // if(req?.files){
-      //     req.body.attachments=req.files;
-      // }
       const result = schema[key].safeParse(req[key]);
       if (!result.success) {
         validationError.push(result.error);
+      } else {
+        (req as any)[key] = result.data; // ← ده الحل، بيحدث الـ req بالـ data المحولة
       }
     }
     if (validationError.length) {

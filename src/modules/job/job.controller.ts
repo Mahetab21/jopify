@@ -6,6 +6,7 @@ import { Authentication } from "../../middleware/Authentication";
 import { authorization } from "../../middleware/authorization";
 import { TokenType } from "../../utils/token";
 import { RoleType } from "../../DB/model/user.model";
+import { fileValidation, multerCloud } from "../../middleware/multer.cloud";
 
 const JobRouter = Router();
 
@@ -14,6 +15,7 @@ JobRouter.post(
   "/create",
   Authentication(TokenType.access),
   authorization([RoleType.employer, RoleType.admin]),
+  multerCloud({ fileTypes: fileValidation.image }).single("logo"),
   Validation(JV.createJobSchema),
   JS.createJob,
 );

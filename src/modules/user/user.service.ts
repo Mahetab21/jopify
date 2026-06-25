@@ -37,39 +37,39 @@ class UserService {
 
   constructor() {}
   //================ signUp===================
-  signUp = async (req: Request, res: Response, next: NextFunction) => {
-    const {
-      firstName,
-      lastName,
-      email,
-      password,
-      gender,
-      age,
-      role,
-      phoneNumber,
-      location,
-    }: signUpSchemaType = req.body;
-    const userExists = await this._userModel.findOne({ email });
-    if (userExists) {
-      throw new AppError("Email already exists", 409);
-    }
-    const otp = await generateOtp();
-    const hashOtp = await Hash(String(otp));
-    eventEmitter.emit("confirmEmail", { email, otp });
-    const user = await this._userModel.create({
-      firstName,
-      lastName,
-      email,
-      otp: hashOtp,
-      password,
-      gender,
-      age,
-      role,
-      phoneNumber,
-      location,
+signUp = async (req: Request, res: Response, next: NextFunction) => {
+  const {
+    firstName, lastName, email, password,
+    gender, age, role, phoneNumber, location,
+  }: signUpSchemaType = req.body;
+
+  const userExists = await this._userModel.findOne({ email });
+  if (userExists) {
+    throw new AppError("Email already exists", 409);
+  }
+
+  let profileImage: string | undefined;
+  if (req.file) {
+    profileImage = await uploadFile({
+      path: `profiles/${email}`,
+      file: req.file,
     });
-    return res.status(201).json({ message: "User created successfully", user });
-  };
+  }
+
+  const otp = await generateOtp();
+  const hashOtp = await Hash(String(otp));
+  eventEmitter.emit("confirmEmail", { email, otp });
+
+  const user = await this._userModel.create({
+    firstName, lastName, email,
+    otp: hashOtp, password,
+    gender, age, role,
+    phoneNumber, location,
+    ...(profileImage && { profileImage }),
+  });
+
+  return res.status(201).json({ message: "User created successfully", user });
+};
   //================ confirmEmail===================
   confirmEmail = async (req: Request, res: Response, next: NextFunction) => {
     const { email, otp }: confirmEmailSchemaType = req.body;
