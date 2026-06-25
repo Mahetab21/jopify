@@ -5,7 +5,7 @@ import { AppError } from "../../utils/classError";
 import { uploadFile } from "../../utils/s3.config";
 import { JobApplicationsRepository } from "../../DB/repositories/jobApplications.repository";
 import applicationModel, { ApplicationStatus, IApplication } from "../../DB/model/jobApplication .model";
-import { ApplyJobSchemaType, GetMyApplicationsSchemaType } from "./jobApplications.validation";
+import { ApplyJobSchemaType, GetAllApplicationsSchemaType, GetMyApplicationsSchemaType } from "./jobApplications.validation";
 import { Types } from "mongoose";
 import { RoleType } from "../../DB/model/user.model";
 class ApplicationService {
@@ -267,6 +267,34 @@ getApplicationStats = async (req: Request, res: Response, next: NextFunction) =>
       },
     });
   }
+};
+//==================== get all application=================================
+getAllApplications = async (req: Request, res: Response, next: NextFunction) => {
+  const { page = 1, limit = 10, status, jobId, userId }: GetAllApplicationsSchemaType = req.query;
+
+  const filter: any = {};
+
+  if (status) filter.status = status;
+  if (jobId) filter.jobId = new Types.ObjectId(jobId);
+  if (userId) filter.userId = new Types.ObjectId(userId);
+
+  const result = await this._applicationModel.paginate({
+    filter,
+    query: { page: page as number, limit: limit as number },
+    sort: { createdAt: -1 },
+    populate: { path: "jobId", select: "title companySnapshot location employmentType" },
+  });
+
+  return res.status(200).json({
+    message: "All applications retrieved successfully",
+    pagination: {
+      current_page: result.currentPage,
+      total_pages: result.numberOfPages,
+      total_count: result.countDocument,
+      limit,
+    },
+    applications: result.docs,
+  });
 };
 }
 

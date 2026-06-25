@@ -55,6 +55,18 @@ export const withdrawApplicationSchema = {
       .regex(/^[0-9a-f]{24}$/, "Invalid application ID format"),
   }),
 };
+//==================== get all application=================================
+export const getAllApplicationsSchema = {
+  query: z.object({
+    page: z.coerce.number().int().min(1).default(1).optional(),
+    limit: z.coerce.number().int().min(1).max(100).default(10).optional(),
+    status: z.enum(Object.values(ApplicationStatus) as [string, ...string[]]).optional(),
+    jobId: z.string().length(24).regex(/^[0-9a-f]{24}$/).optional(),
+    userId: z.string().length(24).regex(/^[0-9a-f]{24}$/).optional(),
+  }),
+};
+
+export type GetAllApplicationsSchemaType = z.infer<typeof getAllApplicationsSchema.query>;
 
 export type WithdrawApplicationSchemaType = z.infer<typeof withdrawApplicationSchema.params>;
 export type UpdateApplicationStatusSchemaType = {

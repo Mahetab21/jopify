@@ -26,6 +26,14 @@ applicationRouter.get(
   Validation(AV.getMyApplicationsSchema),
   AS.getMyApplications,
 );
+//==================== get all application=================================
+applicationRouter.get(
+  "/all",
+  Authentication(TokenType.access),
+  authorization([RoleType.admin]),
+  Validation(AV.getAllApplicationsSchema),
+  AS.getAllApplications,
+);
 //======================== Get job applications (for employers) ========================
 applicationRouter.get(
   "/job/:jobId",
@@ -57,4 +65,5 @@ applicationRouter.get(
   authorization([RoleType.job_seeker, RoleType.employer, RoleType.admin]),
   AS.getApplicationStats,
 );
+
 export default applicationRouter;
