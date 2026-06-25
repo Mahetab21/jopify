@@ -13,7 +13,12 @@ export const Validation = (schema: SchemaType) => {
       if (!result.success) {
         validationError.push(result.error);
       } else {
-        (req as any)[key] = result.data; // ← ده الحل، بيحدث الـ req بالـ data المحولة
+        const target = (req as any)[key];
+        if (typeof target === "object" && target !== null) {
+          Object.assign(target, result.data);
+        } else {
+          (req as any)[key] = result.data;
+        }
       }
     }
     if (validationError.length) {
