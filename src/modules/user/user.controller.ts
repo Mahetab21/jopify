@@ -15,6 +15,12 @@ userRouter.post("/logOut",Authentication(TokenType.access),Validation(UV.logOutS
 userRouter.patch("/forgetPassword",Validation(UV.forgetPasswordSchema), US.forgetPassword);
 userRouter.patch("/resetPassword",Validation(UV.resetPasswordSchema), US.resetPassword);
 userRouter.get("/getProfile", Authentication(TokenType.access), US.getProfile);
+userRouter.get(
+  "/profile/:userId",
+  Authentication(TokenType.access),
+  Validation(UV.getProfileByIdSchema),
+  US.getProfileById
+);
 userRouter.put("/updateBasicInfo",
   Authentication(TokenType.access),
   Validation(UV.updateBasicInfoSchema),
@@ -74,4 +80,5 @@ userRouter.delete("/removeSavedJob/:jobId",
   Validation(UV.removeSavedJobSchema),
   US.removeSavedJob
 )
+
 export default userRouter;

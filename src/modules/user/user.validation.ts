@@ -165,6 +165,14 @@ export const removeSavedJobSchema = {
     jobId: z.string().length(24),
   }),
 };
+
+export const getProfileByIdSchema = {
+  params: z.strictObject({
+    userId: z.string().length(24).regex(/^[0-9a-f]{24}$/, "Invalid user ID format"),
+  }),
+};
+
+export type GetProfileByIdSchemaType = z.infer<typeof getProfileByIdSchema.params>;
 export type signUpSchemaType = z.infer<typeof signUpSchema.body>;
 export type confirmEmailSchemaType = z.infer<typeof confirmEmailSchema.body>;
 export type signInSchemaType = z.infer<typeof signInSchema.body>;

@@ -295,7 +295,6 @@ getAllApplications = async (req: Request, res: Response, next: NextFunction) => 
     },
     applications: result.docs,
   });
-
 };
 }
 

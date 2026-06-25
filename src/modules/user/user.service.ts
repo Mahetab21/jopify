@@ -593,6 +593,24 @@ class UserService {
       user: updatedUser,
     });
   };
+  //================== get profile by id==================
+  getProfileById = async (req: Request, res: Response, next: NextFunction) => {
+  const { userId } = req.params;
+
+  const user = await this._userModel.findOne(
+    { _id: userId },
+    "-password -otp -changeCredentials -deletedAt -deletedBy -restoredAt -restoredBy -blockedUsers -savedJobs"
+  );
+
+  if (!user) {
+    throw new AppError("User not found", 404);
+  }
+
+  return res.status(200).json({
+    message: "User profile retrieved successfully",
+    user,
+  });
+};
 }
 
 export default new UserService();
