@@ -64,6 +64,7 @@ export const getAllApplicationsSchema = {
     jobId: z.string().length(24).regex(/^[0-9a-f]{24}$/).optional(),
     userId: z.string().length(24).regex(/^[0-9a-f]{24}$/).optional(),
   }),
+  
 };
 
 export type GetAllApplicationsSchemaType = z.infer<typeof getAllApplicationsSchema.query>;

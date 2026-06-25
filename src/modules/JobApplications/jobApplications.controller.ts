@@ -33,6 +33,7 @@ applicationRouter.get(
   authorization([RoleType.admin]),
   Validation(AV.getAllApplicationsSchema),
   AS.getAllApplications,
+
 );
 //======================== Get job applications (for employers) ========================
 applicationRouter.get(
