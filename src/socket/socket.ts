@@ -16,15 +16,19 @@ export const initSocket = (httpServer: any) => {
 
   io.use((socket, next) => {
     const rawToken = socket.handshake.auth?.token || socket.handshake.headers?.token;
-    const token = Array.isArray(rawToken) ? rawToken[0] : rawToken;
+    let token = Array.isArray(rawToken) ? rawToken[0] : rawToken;
 
     console.log("TOKEN:", token);
-    console.log("SECRET:", process.env.JWT_SECRET);
+    console.log("SECRET (ACCESS_TOKEN_USER):", process.env.ACCESS_TOKEN_USER);
 
     if (!token) return next(new Error("Authentication error"));
 
+    if (token.startsWith("Bearer ")) {
+      token = token.split(" ")[1];
+    }
+
     try {
-      const decoded = jwt.verify(token as string, process.env.JWT_SECRET!) as any;
+      const decoded = jwt.verify(token as string, process.env.ACCESS_TOKEN_USER!) as any;
       console.log("DECODED:", decoded);
       socket.data.userId = decoded.id || decoded._id;
       next();
