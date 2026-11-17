@@ -17,7 +17,7 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Prepare compatible security updates in the temporary checkout
-        run: npm audit fix
+        run: npm install nodemailer@10.6.0 --save-exact && npm audit fix
         continue-on-error: true
       - name: Report remaining advisories
         shell: bash
