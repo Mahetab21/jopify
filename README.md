@@ -166,7 +166,7 @@ Use `Authorization: Bearer <access_token>` for protected routes. Existing route 
 | `npm run check` | Typecheck, build and run tests |
 | `npm run start:dev` | Build once, then watch and restart |
 
-Tests use a **temporary MongoDB instance and synthetic credentials**. Email and S3 are stubbed, so no messages are sent and no real files are uploaded. The first test run may download a MongoDB binary and needs internet access. CI runs the same checks on pushes to `main` and pull requests.
+Tests use a **temporary MongoDB instance and synthetic credentials**. External email delivery and S3 are stubbed, so no messages are sent and no real files are uploaded. A separate offline test verifies email composition through Nodemailer's stream transport. The first test run may download a MongoDB binary and needs internet access. CI runs these checks and a dependency audit on pushes to `main` and pull requests.
 
 Coverage includes role escalation prevention, credential redaction, OTP confirmation/expiry, job ownership, public draft visibility, query parsing, duplicate applications, employer statistics, token revocation, multi-connection socket presence and message delivery/unread status. Tests do not verify live Google, Gmail or AWS accounts.
 
