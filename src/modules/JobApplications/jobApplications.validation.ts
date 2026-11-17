@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ApplicationStatus } from "../../DB/model/jobApplication .model";
+import { ApplicationStatus } from "../../DB/model/jobApplication.model";
 //==================== applying to a job==================
 export const applyJobSchema = {
   params: z.strictObject({

@@ -2,7 +2,7 @@ import { DbRepository } from "./db.repository";
 import { Model } from "mongoose";
 import { HydratedDocument } from "mongoose";
 import { AppError } from "../../utils/classError";
-import { IApplication } from "../model/jobApplication .model";
+import { IApplication } from "../model/jobApplication.model";
 
 export class JobApplicationsRepository extends DbRepository<IApplication>{
     constructor(protected readonly model:Model<IApplication>){

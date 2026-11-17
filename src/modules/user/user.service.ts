@@ -21,9 +21,10 @@ import {
 } from "./user.validation";
 import { AppError } from "../../utils/classError";
 import { generateOtp } from "../../service/sendEmail";
-import { eventEmitter } from "../../utils/events";
+import { sendEmail } from "../../service/sendEmail";
+import { emailTemplate } from "../../service/email.temp";
 import { Compare, Hash } from "../../utils/hash";
-import { v4 as uuidv4 } from "uuid";
+import { randomUUID as uuidv4 } from "node:crypto";
 import { GenerateToken } from "../../utils/token";
 import { OAuth2Client, TokenPayload } from "google-auth-library";
 import { deleteFile, uploadFile } from "../../utils/s3.config";
@@ -58,24 +59,40 @@ signUp = async (req: Request, res: Response, next: NextFunction) => {
 
   const otp = await generateOtp();
   const hashOtp = await Hash(String(otp));
-  eventEmitter.emit("confirmEmail", { email, otp });
+
 
   const user = await this._userModel.create({
     firstName, lastName, email,
-    otp: hashOtp, password,
+    otp: hashOtp, otpExpiresAt: new Date(Date.now() + 10 * 60 * 1000), otpPurpose: "confirm", password,
     gender, age, role,
     phoneNumber, location,
     ...(profileImage && { profileImage }),
   });
 
+  await sendEmail({ to: email, subject: "Confirm your email", html: emailTemplate(String(otp), "Email confirmation") });
   return res.status(201).json({ message: "User created successfully", user });
 };
+  resendConfirmation = async (req: Request, res: Response) => {
+    const { email } = req.body;
+    const user = await this._userModel.findOne({ email, confirmed: false, provider: ProviderType.system });
+    if (user) {
+      const otp = await generateOtp();
+      await this._userModel.updateOne({ _id: user._id }, {
+        otp: await Hash(String(otp)), otpPurpose: "confirm",
+        otpExpiresAt: new Date(Date.now() + 10 * 60 * 1000),
+      });
+      await sendEmail({ to: email, subject: "Confirm your email", html: emailTemplate(String(otp), "Email confirmation") });
+    }
+    return res.json({ message: "If an unconfirmed account exists, a new code has been sent" });
+  };
   //================ confirmEmail===================
   confirmEmail = async (req: Request, res: Response, next: NextFunction) => {
     const { email, otp }: confirmEmailSchemaType = req.body;
     const user = await this._userModel.findOne({
       email,
       confirmed: false,
+      otpPurpose: "confirm",
+      otpExpiresAt: { $gt: new Date() },
     });
     if (!user) {
       throw new AppError("Invalid email or user already confirmed", 400);
@@ -85,7 +102,7 @@ signUp = async (req: Request, res: Response, next: NextFunction) => {
     }
     await this._userModel.updateOne(
       { email: user?.email },
-      { confirmed: true, $unset: { otp: "" } }
+      { confirmed: true, $unset: { otp: "", otpExpiresAt: "", otpPurpose: "" } }
     );
     return res.status(200).json({ message: "Email confirmed successfully" });
   };
@@ -103,6 +120,7 @@ signUp = async (req: Request, res: Response, next: NextFunction) => {
     if (!(await Compare(password, user?.password!))) {
       throw new AppError("Invalid password", 400);
     }
+    if (user.deletedAt || user.isActive === false) throw new AppError("Account is inactive", 403);
     const jwtid = uuidv4();
     const access_token = await GenerateToken({
       payload: { id: user._id, email: user.email },
@@ -132,6 +150,7 @@ signUp = async (req: Request, res: Response, next: NextFunction) => {
   //================ logInWithGoogle===================
   logInWithGmail = async (req: Request, res: Response, next: NextFunction) => {
     const { idToken }: logInWithGmailSchemaType = req.body; //from frontend
+    if (!process.env.WEB_CLIENT_ID) throw new AppError("Google login is not configured", 503);
     const client = new OAuth2Client();
     async function verify() {
       const ticket = await client.verifyIdToken({
@@ -144,6 +163,7 @@ signUp = async (req: Request, res: Response, next: NextFunction) => {
 
     const { email, email_verified, picture, name } =
       (await verify()) as TokenPayload;
+    if (!email || !email_verified) throw new AppError("A verified Google email is required", 401);
     //check email
     let user = await this._userModel.findOne({ email });
     if (!user) {
@@ -151,11 +171,13 @@ signUp = async (req: Request, res: Response, next: NextFunction) => {
         email: email!,
         profileImage: picture!,
         confirmed: email_verified!,
-        userName: name!,
+        firstName: name?.split(" ")[0] || "Google",
+        lastName: name?.split(" ").slice(1).join(" ") || "User",
         password: uuidv4(),
         provider: ProviderType.google,
       });
     }
+    if (user.deletedAt || user.isActive === false) throw new AppError("Account is inactive", 403);
     if (user?.provider === ProviderType.system) {
       throw new AppError("You can not log in with system account", 400);
     }
@@ -208,15 +230,16 @@ signUp = async (req: Request, res: Response, next: NextFunction) => {
     const { email }: forgetPasswordSchemaType = req.body;
     const user = await this._userModel.findOne({
       email,
-      confirmed: { $exists: true },
+      confirmed: true,
+      provider: ProviderType.system,
     });
     if (!user) {
       throw new AppError("Invalid email or user not confirmed", 400);
     }
     const otp = await generateOtp();
     const hashOtp = await Hash(String(otp));
-    eventEmitter.emit("forgetPassword", { email, otp });
-    await this._userModel.updateOne({ email: user?.email }, { otp: hashOtp });
+    await this._userModel.updateOne({ email: user.email }, { otp: hashOtp, otpPurpose: "reset", otpExpiresAt: new Date(Date.now() + 10 * 60 * 1000) });
+    await sendEmail({ to: email, subject: "Reset your password", html: emailTemplate(String(otp), "Password reset") });
     return res.status(200).json({ message: "OTP sent to email successfully" });
   };
   //================= resetPassword===================
@@ -226,6 +249,10 @@ signUp = async (req: Request, res: Response, next: NextFunction) => {
     const user = await this._userModel.findOne({
       email,
       otp: { $exists: true },
+      otpPurpose: "reset",
+      otpExpiresAt: { $gt: new Date() },
+      confirmed: true,
+      provider: ProviderType.system,
     });
     if (!user) {
       throw new AppError(
@@ -239,7 +266,7 @@ signUp = async (req: Request, res: Response, next: NextFunction) => {
     const hash = await Hash(password);
     await this._userModel.updateOne(
       { email: user?.email },
-      { password: hash, $unset: { otp: "" }, changeCredentials: new Date() }
+      { password: hash, $unset: { otp: "", otpExpiresAt: "", otpPurpose: "" }, changeCredentials: new Date() }
     );
     return res.status(200).json({ message: "Password reset successfully" });
   };
@@ -284,6 +311,13 @@ signUp = async (req: Request, res: Response, next: NextFunction) => {
       throw new AppError("Username already exists", 409);
     }
   }
+    if (updateData.userName) {
+      const [firstName, ...lastNames] = updateData.userName.trim().split(/\s+/);
+      if (!firstName || !lastNames.length) throw new AppError("Provide first and last name", 400);
+      updateData.firstName = firstName;
+      updateData.lastName = lastNames.join(" ");
+      delete updateData.userName;
+    }
     const updatedUser = await this._userModel.findOneAndUpdate(
       { _id: req.user?._id },
       { $set: updateData },
@@ -322,7 +356,7 @@ signUp = async (req: Request, res: Response, next: NextFunction) => {
     next: NextFunction
   ) => {
     const { experianceId } = req.params;
-    const experianceData: updateExperianceSchemaType = req.body;
+    const experianceData: updateExperianceSchemaType["body"] = req.body;
     const user = await this._userModel.findOne({
       _id: req.user?._id,
       "experience._id": experianceId,
@@ -396,7 +430,7 @@ signUp = async (req: Request, res: Response, next: NextFunction) => {
   //================== updateEducation=================
   updateEducation = async (req: Request, res: Response, next: NextFunction) => {
     const { educationId } = req.params;
-    const educationData: updateEducationSchemaType = req.body;
+    const educationData: updateEducationSchemaType["body"] = req.body;
     const user = await this._userModel.findOne({
       _id: req.user?._id,
       "education._id": educationId,
@@ -462,20 +496,10 @@ signUp = async (req: Request, res: Response, next: NextFunction) => {
       throw new AppError("User not found", 404);
     }
 
-    // Delete old resume from S3 if exists
-    if (user.resume) {
-      try {
-        await deleteFile({ Key: user.resume });
-      } catch (error) {
-        console.error("Error deleting old resume:", error);
-      }
-    }
-
     // Upload new resume to S3
     const resumeKey = await uploadFile({
       path: `resumes/${req.user._id}`,
       file: req.file,
-      ACL: "private",
     });
 
     const updatedUser = await this._userModel.findOneAndUpdate(
@@ -484,6 +508,9 @@ signUp = async (req: Request, res: Response, next: NextFunction) => {
       { new: true, select: "-password -otp" }
     );
 
+    if (user.resume) {
+      await deleteFile({ Key: user.resume }).catch(() => console.error("Old resume cleanup failed"));
+    }
     return res.status(200).json({
       message: "Resume uploaded successfully",
       user: updatedUser,

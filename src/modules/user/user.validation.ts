@@ -14,7 +14,7 @@ export const signUpSchema = {
     age: z.coerce.number().min(18).max(60),  // ← coerce
     location: z.string(),
     phoneNumber: z.string(),
-    role: z.enum([RoleType.admin, RoleType.job_seeker, RoleType.employer]).default(RoleType.job_seeker),
+    role: z.enum([RoleType.job_seeker, RoleType.employer]).default(RoleType.job_seeker),
     gender: z.enum([GenderType.female, GenderType.male]),
   }).required().superRefine((data, ctx) => {
     if (data.password !== data.cPassword) {
@@ -114,9 +114,9 @@ export const addExperianceSchema = {
 }
 export const updateExperianceSchema = {
   params : z.strictObject({
-    experianceId: z.string().length(24),
+    experianceId: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid ID"),
   }),
-  body : experianceBodySchema.body.partial().refine((data) => {
+  body : experianceBodySchema.body.extend({ isCurrent: z.boolean().optional() }).partial().refine((data) => {
     return Object.keys(data).length > 0
   },{
     message:"At least one field is required",
@@ -124,7 +124,7 @@ export const updateExperianceSchema = {
 };
 export const deleteExperianceSchema = {
   params : z.strictObject({
-    experianceId: z.string().length(24),
+    experianceId: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid ID"),
   })
 };
 //================= Education Schema ==================
@@ -141,9 +141,9 @@ export const addEducationSchema = {
 };
 export const updateEducationSchema = {
   params : z.strictObject({
-    educationId: z.string().length(24),
+    educationId: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid ID"),
     }),
-    body: addEducationSchema.body.partial().refine((data) => {
+    body: addEducationSchema.body.extend({ isCurrent: z.boolean().optional() }).partial().refine((data) => {
       return Object.keys(data).length > 0
     },{
       message:"At least one field is required",
@@ -151,17 +151,17 @@ export const updateEducationSchema = {
 };
 export const deleteEducationSchema = {
   params: z.strictObject({
-    educationId: z.string().length(24),
+    educationId: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid ID"),
   })
 };
 export const saveJobSchema = {
   params: z.strictObject({
-    jobId: z.string().length(24),
+    jobId: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid ID"),
   }),
 };
 export const removeSavedJobSchema = {
   params: z.strictObject({
-    jobId: z.string().length(24),
+    jobId: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid ID"),
   }),
 };
 

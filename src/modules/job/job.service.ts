@@ -11,6 +11,7 @@ import {
   DeleteJobSchemaType,
   GetMyJobsQuerySchemaType,
 } from "./job.validation";
+import { escapeRegExp } from "../../utils/search";
 import { uploadFile } from "../../utils/s3.config";
 
 class JobService {
@@ -129,28 +130,28 @@ class JobService {
     }: GetJobsQuerySchemaType = req.query;
 
   const filter: any = {
-    status: status || Status.active,
+    status: Status.active,
     deletedAt: { $exists: false },
   };
 
   if (search) {
     filter.$or = [
-      { title: { $regex: search, $options: "i" } },
-      { description: { $regex: search, $options: "i" } },
-      { "companySnapshot.name": { $regex: search, $options: "i" } },
+      { title: { $regex: escapeRegExp(search), $options: "i" } },
+      { description: { $regex: escapeRegExp(search), $options: "i" } },
+      { "companySnapshot.name": { $regex: escapeRegExp(search), $options: "i" } },
     ];
   }
 
-  if (location) filter.location = { $regex: location, $options: "i" };
+  if (location) filter.location = { $regex: escapeRegExp(location), $options: "i" };
   if (employmentType) filter.employmentType = employmentType;
   if (experienceLevel) filter.experienceLevel = experienceLevel;
-  if (category) filter.category = { $regex: category, $options: "i" };
+  if (category) filter.category = { $regex: escapeRegExp(category), $options: "i" };
   if (isRemote !== undefined) filter.isRemote = isRemote;
 
-  if (minSalary || maxSalary) {
+  if (minSalary !== undefined || maxSalary !== undefined) {
     filter.$and = [
-      ...(minSalary ? [{ "salaryRange.min": { $gte: minSalary } }] : []),
-      ...(maxSalary ? [{ "salaryRange.max": { $lte: maxSalary } }] : []),
+      ...(minSalary !== undefined ? [{ "salaryRange.min": { $gte: minSalary } }] : []),
+      ...(maxSalary !== undefined ? [{ "salaryRange.max": { $lte: maxSalary } }] : []),
     ];
   }
 
@@ -176,7 +177,7 @@ class JobService {
   getJobById = async (req: Request, res: Response, next: NextFunction) => {
   const { jobId } = req.params as GetJobByIdSchemaType;
   const job = await this._jobModel.findOne(
-    { _id: jobId, deletedAt: { $exists: false } }
+    { _id: jobId, status: Status.active, deletedAt: { $exists: false } }
  );
   if (!job) {
     throw new AppError("Job not found", 404);

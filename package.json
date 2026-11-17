@@ -4,14 +4,24 @@
   "main": "dist/index.js",
   "type": "commonjs",
   "scripts": {
-    "start:dev": "concurrently \"tsc --watch\" \"nodemon dist/index.js\"",
+    "start:dev": "npm run build && concurrently -k \"tsc --watch\" \"nodemon --watch dist dist/index.js\"",
     "build": "tsc",
-    "start": "node dist/index.js"
+    "typecheck": "tsc --noEmit",
+    "start": "node dist/index.js",
+    "test": "npm run build && node --test tests/*.test.cjs",
+    "check": "npm run typecheck && npm test"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "nodejs",
+    "typescript",
+    "express",
+    "mongodb",
+    "recruitment",
+    "socket-io"
+  ],
+  "author": "Mahitab Ayman",
   "license": "ISC",
-  "description": "",
+  "description": "Jobify recruitment API with role-based access, job applications, S3 uploads and real-time messaging.",
   "dependencies": {
     "@aws-sdk/client-s3": "^3.948.0",
     "@aws-sdk/lib-storage": "^3.948.0",
@@ -30,7 +40,6 @@
     "nodemailer": "^7.0.11",
     "socket.io": "^4.8.3",
     "socket.io-client": "^4.8.3",
-    "uuid": "^13.0.0",
     "zod": "^4.2.0"
   },
   "devDependencies": {
@@ -44,8 +53,16 @@
     "@types/multer": "^2.0.0",
     "@types/nodemailer": "^7.0.4",
     "@types/socket.io": "^3.0.1",
-    "@types/uuid": "^10.0.0",
+    "mongodb-memory-server": "^11.3.0",
     "nodemon": "^3.1.11",
     "typescript": "^5.9.3"
+  },
+  "private": true,
+  "engines": {
+    "node": ">=22"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Mahetab21/jopify.git"
   }
 }

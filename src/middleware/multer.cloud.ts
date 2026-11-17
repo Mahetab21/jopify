@@ -2,7 +2,7 @@ import multer, { FileFilterCallback } from "multer";
 import { Request } from "express";
 import { AppError } from "../utils/classError";
 import os from "os";
-import { v4 as uuidv4 } from "uuid";
+import { randomUUID as uuidv4 } from "node:crypto";
 
 
 export  enum storageType {

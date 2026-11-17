@@ -4,7 +4,7 @@ import { JobRepository } from "../../DB/repositories/job.repository";
 import { AppError } from "../../utils/classError";
 import { uploadFile } from "../../utils/s3.config";
 import { JobApplicationsRepository } from "../../DB/repositories/jobApplications.repository";
-import applicationModel, { ApplicationStatus, IApplication } from "../../DB/model/jobApplication .model";
+import applicationModel, { ApplicationStatus, IApplication } from "../../DB/model/jobApplication.model";
 import { ApplyJobSchemaType, GetAllApplicationsSchemaType, GetMyApplicationsSchemaType } from "./jobApplications.validation";
 import { Types } from "mongoose";
 import { RoleType } from "../../DB/model/user.model";
@@ -40,10 +40,12 @@ class ApplicationService {
     throw new AppError("You cannot apply for your own job", 400);
   }
 
+  if (await this._applicationModel.findOne({ jobId, userId })) {
+    throw new AppError("You have already applied for this job", 409);
+  }
   const resumeKey = await uploadFile({
     path: `applications/${userId}/${jobId}`,
     file: req.file,
-    ACL: "private",
   });
 
  const application = await this._applicationModel.create({
@@ -228,8 +230,11 @@ getApplicationStats = async (req: Request, res: Response, next: NextFunction) =>
   }
 
   if (role === RoleType.employer || role === RoleType.admin) {
-    const matchFilter = role === RoleType.employer 
-      ? { companyId: userId } 
+    const ownedJobs = role === RoleType.employer
+      ? await this._jobModel.find({ filter: { postedBy: userId }, select: "_id" })
+      : [];
+    const matchFilter = role === RoleType.employer
+      ? { jobId: { $in: ownedJobs.map(job => job._id) } }
       : {};
 
     const stats = await applicationModel.aggregate([

@@ -30,6 +30,8 @@ export interface IUser {
     age?: number;
     role: RoleType;
     otp?: string;
+    otpExpiresAt?: Date;
+    otpPurpose?: string;
     tempProfileImage?: string;
     profileImage?: string;
     resume?: string;
@@ -93,6 +95,8 @@ const userSchema = new mongoose.Schema<IUser>({
     phoneNumber: { type: String },
     location: { type: String },
     otp: { type: String },
+    otpExpiresAt: { type: Date },
+    otpPurpose: { type: String, enum: ["confirm", "reset"] },
     role: { type: String, enum: RoleType, default: RoleType.job_seeker },
     tempProfileImage: { type: String },
     profileImage: { type: String },
@@ -139,7 +143,10 @@ const userSchema = new mongoose.Schema<IUser>({
 },{
     timestamps:true,
     strictQuery: true,
-    toJSON:{virtuals:true},
+    toJSON:{virtuals:true, transform: (_doc, ret: any) => {
+      delete ret.password; delete ret.otp; delete ret.otpExpiresAt; delete ret.otpPurpose;
+      return ret;
+    }},
     toObject:{virtuals:true}
 })
 

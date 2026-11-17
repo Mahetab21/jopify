@@ -43,14 +43,11 @@ class MessageService {
 
 
   const io = getIO();
-  const receiverSocketId = onlineUsers.get(receiverId);
-  if (receiverSocketId) {
-  io.to(receiverSocketId).emit("new-message", message);
-   }
-  await this._messageModel.findOneAndUpdate(
-    { _id: message._id },
-    { $set: { status: MessageStatus.delivered } }
-  );
+  if (onlineUsers.has(receiverId)) {
+    message.status = MessageStatus.delivered;
+    await message.save();
+    io.to(`user:${receiverId}`).emit("new-message", message);
+  }
 
   return res.status(201).json({
       message: "Message sent successfully",
@@ -91,6 +88,7 @@ class MessageService {
         },
       },
     },
+    { $sort: { createdAt: 1, _id: 1 } },
     {
       // group by the another person and get the last message and count of unread messages
       $group: {
@@ -102,7 +100,7 @@ class MessageService {
               {
                 $and: [
                   { $eq: ["$receiverId", userId] },
-                  { $eq: ["$status", "sent"] },
+                  { $ne: ["$status", "read"] },
                 ],
               },
               1,
@@ -148,7 +146,7 @@ class MessageService {
   const total = await messageModel.aggregate([
     {
       $match: {
-        $or: [{ senderId: userId }, { receiverId: userId }],
+        $or: [{ senderId: userId, isDeletedBySender: false }, { receiverId: userId, isDeletedByReceiver: false }],
       },
     },
     {
@@ -248,9 +246,8 @@ class MessageService {
     { new: true }
   );
   const io = getIO();
-  const senderSocketId = onlineUsers.get(message.senderId.toString());
- if (senderSocketId) {
-  io.to(senderSocketId).emit("message-seen", {
+ if (onlineUsers.has(message.senderId.toString())) {
+  io.to(`user:${message.senderId.toString()}`).emit("message-seen", {
     messageId,
     by: userId,
   });

@@ -1,3 +1,2 @@
-const onlineUsers = new Map<string, string>();
-
+const onlineUsers = new Map<string, Set<string>>();
 export default onlineUsers;

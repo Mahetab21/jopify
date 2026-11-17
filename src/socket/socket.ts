@@ -1,70 +1,52 @@
 import { Server } from "socket.io";
+import { Server as HttpServer } from "node:http";
 import onlineUsers from "./onlineUsers";
 import { setIO } from "./socketInstance";
-import jwt from "jsonwebtoken";
-import { join, resolve } from "path";
-import { config } from "dotenv";
-config({ path: join(process.cwd(), "config", ".env") });
-//config({ path: resolve("./config/.env") });
+import { decodedTokenAndFetchUser, GetSignature } from "../utils/token";
+import { allowedOrigins } from "../config/environment";
 
-export const initSocket = (httpServer: any) => {
-  const io = new Server(httpServer, {
-    cors: { origin: "*" },
-  });
-
+export const initSocket = (httpServer: HttpServer) => {
+  const io = new Server(httpServer, { cors: { origin: allowedOrigins() } });
   setIO(io);
-
-  io.use((socket, next) => {
-    const rawToken = socket.handshake.auth?.token || socket.handshake.headers?.token;
-    let token = Array.isArray(rawToken) ? rawToken[0] : rawToken;
-
-    console.log("TOKEN:", token);
-    console.log("SECRET (ACCESS_TOKEN_USER):", process.env.ACCESS_TOKEN_USER);
-
-    if (!token) return next(new Error("Authentication error"));
-
-    if (token.startsWith("Bearer ")) {
-      token = token.split(" ")[1];
-    }
-
+  io.use(async (socket, next) => {
     try {
-      const decoded = jwt.verify(token as string, process.env.ACCESS_TOKEN_USER!) as any;
-      console.log("DECODED:", decoded);
-      socket.data.userId = decoded.id || decoded._id;
+      const raw = socket.handshake.auth?.token || socket.handshake.headers.token;
+      if (typeof raw !== "string") throw new Error("Missing token");
+      const parts = raw.trim().split(/\s+/);
+      const prefix = parts.length === 1 ? (process.env.BEARER_USER || "Bearer") : parts[0]!;
+      const token = parts.length === 1 ? parts[0]! : parts[1]!;
+      const signatures = await GetSignature(prefix);
+      if (!signatures || parts.length > 2) throw new Error("Invalid token");
+      const { user } = await decodedTokenAndFetchUser(token, signatures);
+      socket.data.userId = user._id.toString();
       next();
-    } catch (err) {
-      console.log("JWT ERROR:", err);
-      next(new Error("Invalid token"));
+    } catch {
+      next(new Error("Invalid or expired token"));
     }
   });
-
-  io.on("connection", (socket) => {
-    console.log("Socket Connected:", socket.id);
-
-    const userId = socket.data.userId;
-    onlineUsers.set(userId, socket.id);
-    io.emit("user-online", userId);
-
-    socket.on("typing", ({ receiverId }) => {
-      const receiverSocketId = onlineUsers.get(receiverId);
-      if (receiverSocketId) {
-        io.to(receiverSocketId).emit("typing", { senderId: userId });
-      }
-    });
-
-    socket.on("stop-typing", ({ receiverId }) => {
-      const receiverSocketId = onlineUsers.get(receiverId);
-      if (receiverSocketId) {
-        io.to(receiverSocketId).emit("stop-typing", { senderId: userId });
-      }
-    });
-
+  io.on("connection", socket => {
+    const userId: string = socket.data.userId;
+    const sessions = onlineUsers.get(userId) || new Set<string>();
+    const wasOffline = sessions.size === 0;
+    sessions.add(socket.id);
+    onlineUsers.set(userId, sessions);
+    socket.join(`user:${userId}`);
+    if (wasOffline) io.emit("user-online", userId);
+    for (const event of ["typing", "stop-typing"]) {
+      socket.on(event, payload => {
+        const receiverId = payload?.receiverId;
+        if (typeof receiverId === "string" && /^[0-9a-fA-F]{24}$/.test(receiverId)) {
+          io.to(`user:${receiverId}`).emit(event, { senderId: userId });
+        }
+      });
+    }
     socket.on("disconnect", () => {
-      console.log("Socket Disconnected:", socket.id);
-      onlineUsers.delete(userId);
-      io.emit("user-offline", userId);
+      sessions.delete(socket.id);
+      if (!sessions.size) {
+        onlineUsers.delete(userId);
+        io.emit("user-offline", userId);
+      }
     });
   });
-
   return io;
 };

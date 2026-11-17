@@ -1,6 +1,6 @@
 import {DeleteObjectCommand, DeleteObjectsCommand, GetObjectCommand, ListObjectsV2Command, ObjectCannedACL, PutObjectCommand, S3Client} from "@aws-sdk/client-s3";
 import { storageType } from "../middleware/multer.cloud";
-import { v4 as uuidv4 } from "uuid";
+import { randomUUID as uuidv4 } from "node:crypto";
 import { createReadStream } from "fs";
 import { AppError } from "./classError";
 import { Upload } from "@aws-sdk/lib-storage";
@@ -20,14 +20,14 @@ export const uploadFile = async(
     {
         storeType= storageType.cloud,
         Bucket=process.env.AWS_BUCKET_NAME!,
-        ACL = "private" as ObjectCannedACL,
+        ACL,
         path="general",
         file
 
     }:{
         storeType?:storageType,
         Bucket?:string,
-        ACL?:ObjectCannedACL,
+        ACL?:ObjectCannedACL | undefined,
         path:string,
         file:Express.Multer.File
     }
@@ -35,7 +35,7 @@ export const uploadFile = async(
     const command = new PutObjectCommand({
         Bucket,
         Key: `${process.env.APPLICATION_NAME}/${path}/${uuidv4()}_${file.originalname}`,
-        ACL,
+        ...(ACL ? { ACL } : {}),
         Body:storeType=== storageType.cloud ? file.buffer : createReadStream(file.path),
         ContentType: file.mimetype
     })
@@ -50,14 +50,14 @@ export const uploadLargeFile =async(
     {
         storeType= storageType.cloud,
         Bucket=process.env.AWS_BUCKET_NAME!,
-        ACL = "private" as ObjectCannedACL,
+        ACL,
         path="general",
         file
 
     }:{
         storeType?:storageType,
         Bucket?:string,
-        ACL?:ObjectCannedACL,
+        ACL?:ObjectCannedACL | undefined,
         path:string,
         file:Express.Multer.File
     }
@@ -67,7 +67,7 @@ export const uploadLargeFile =async(
         params:{
             Bucket,
             Key: `${process.env.APPLICATION_NAME}/${path}/${uuidv4()}_${file.originalname}`,
-            ACL,
+            ...(ACL ? { ACL } : {}),
             Body:storeType=== storageType.cloud ? file.buffer : createReadStream(file.path),
             ContentType: file.mimetype
         }
@@ -85,7 +85,7 @@ export const uploadFiles = async(
     {
         storeType= storageType.cloud,
         Bucket=process.env.AWS_BUCKET_NAME!,
-        ACL = "private" as ObjectCannedACL,
+        ACL,
         path="general",
         files,
         useLargeFiles=false
@@ -93,7 +93,7 @@ export const uploadFiles = async(
     }:{
         storeType?:storageType,
         Bucket?:string,
-        ACL?:ObjectCannedACL,
+        ACL?:ObjectCannedACL | undefined,
         path:string,
         files:Express.Multer.File[],
         useLargeFiles?:boolean

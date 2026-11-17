@@ -13,6 +13,7 @@ userRouter.post(
   Validation(UV.signUpSchema),
   US.signUp
 );userRouter.post("/confirmEmail" ,Validation(UV.confirmEmailSchema), US.confirmEmail)
+userRouter.post("/resendConfirmation", Validation(UV.forgetPasswordSchema), US.resendConfirmation);
 userRouter.post("/signIn", Validation(UV.signInSchema), US.signIn);
 userRouter.post("/logInWithGmail", Validation(UV.logInWithGmailSchema), US.logInWithGmail);
 userRouter.post("/logOut",Authentication(TokenType.access),Validation(UV.logOutSchema), US.logOut);

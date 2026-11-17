@@ -11,15 +11,15 @@ export const Authentication = (tokenType: TokenType = TokenType.access) => {
     const { authorization } = req.headers;
     const [prefix, token] = authorization?.split(" ") || [];
     if (!token || !prefix) {
-      throw new AppError("Invalid Token", 400);
+      throw new AppError("Invalid Token", 401);
     }
     const signatures = await GetSignature(prefix, tokenType);
     if (!signatures) {
-      throw new AppError("Invalid signature", 400);
+      throw new AppError("Invalid signature", 401);
     }
     const decoded = await decodedTokenAndFetchUser(token, signatures);
     if (!decoded) {
-      throw new AppError("Invalid Token decoded", 400);
+      throw new AppError("Invalid Token decoded", 401);
     }
 
     req.user = decoded?.user;

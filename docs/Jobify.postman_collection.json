@@ -1,0 +1,1241 @@
+{
+  "info": {
+    "name": "Jobify API",
+    "description": "Jobify recruitment API: authentication, profiles, jobs, applications and messaging. Start with registration and confirmation. Sign-in requests save access tokens. Configure email/S3 locally for their respective workflows. See docs/API.md for endpoint details. Examples contain synthetic data only.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "employerToken",
+      "value": ""
+    },
+    {
+      "key": "seekerToken",
+      "value": ""
+    },
+    {
+      "key": "jobId",
+      "value": ""
+    },
+    {
+      "key": "appId",
+      "value": ""
+    },
+    {
+      "key": "userId",
+      "value": ""
+    },
+    {
+      "key": "messageId",
+      "value": ""
+    },
+    {
+      "key": "experianceId",
+      "value": ""
+    },
+    {
+      "key": "educationId",
+      "value": ""
+    },
+    {
+      "key": "seekerEmail",
+      "value": "seeker@example.com"
+    },
+    {
+      "key": "employerEmail",
+      "value": "employer@example.com"
+    },
+    {
+      "key": "password",
+      "value": "ExamplePassword123"
+    },
+    {
+      "key": "newPassword",
+      "value": "AnotherPassword123"
+    },
+    {
+      "key": "otp",
+      "value": ""
+    },
+    {
+      "key": "googleIdToken",
+      "value": ""
+    },
+    {
+      "key": "receiverId",
+      "value": ""
+    },
+    {
+      "key": "adminToken",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Register employer",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/users/signUp",
+        "description": "See docs/API.md for validation rules and role requirements.",
+        "auth": {
+          "type": "noauth"
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"firstName\": \"Mona\",\n  \"lastName\": \"Ahmed\",\n  \"email\": \"{{employerEmail}}\",\n  \"password\": \"{{password}}\",\n  \"cPassword\": \"{{password}}\",\n  \"age\": 24,\n  \"gender\": \"female\",\n  \"role\": \"employer\",\n  \"phoneNumber\": \"+201000000000\",\n  \"location\": \"Cairo\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Confirm employer email",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/users/confirmEmail",
+        "description": "See docs/API.md for validation rules and role requirements.",
+        "auth": {
+          "type": "noauth"
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{employerEmail}}\",\n  \"otp\": \"{{otp}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Sign in employer",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/users/signIn",
+        "description": "See docs/API.md for validation rules and role requirements.",
+        "auth": {
+          "type": "noauth"
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{employerEmail}}\",\n  \"password\": \"{{password}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (pm.response.code >= 200 && pm.response.code < 300) {",
+              "  const data = pm.response.json();",
+              "  const value = data.access_token;",
+              "  if (value) pm.collectionVariables.set(\"employerToken\", value);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "POST /users/signUp",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/users/signUp",
+        "description": "See docs/API.md for validation rules and role requirements.",
+        "auth": {
+          "type": "noauth"
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"firstName\": \"Mona\",\n  \"lastName\": \"Ahmed\",\n  \"email\": \"{{seekerEmail}}\",\n  \"password\": \"{{password}}\",\n  \"cPassword\": \"{{password}}\",\n  \"age\": 24,\n  \"gender\": \"female\",\n  \"role\": \"job_seeker\",\n  \"phoneNumber\": \"+201000000000\",\n  \"location\": \"Cairo\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "POST /users/confirmEmail",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/users/confirmEmail",
+        "description": "See docs/API.md for validation rules and role requirements.",
+        "auth": {
+          "type": "noauth"
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{seekerEmail}}\",\n  \"otp\": \"{{otp}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "POST /users/resendConfirmation",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/users/resendConfirmation",
+        "description": "See docs/API.md for validation rules and role requirements.",
+        "auth": {
+          "type": "noauth"
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{seekerEmail}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "POST /users/signIn",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/users/signIn",
+        "description": "See docs/API.md for validation rules and role requirements.",
+        "auth": {
+          "type": "noauth"
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{seekerEmail}}\",\n  \"password\": \"{{password}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (pm.response.code >= 200 && pm.response.code < 300) {",
+              "  const data = pm.response.json();",
+              "  const value = data.access_token;",
+              "  if (value) pm.collectionVariables.set(\"seekerToken\", value);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "POST /users/logInWithGmail",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/users/logInWithGmail",
+        "description": "See docs/API.md for validation rules and role requirements.",
+        "auth": {
+          "type": "noauth"
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"idToken\": \"{{googleIdToken}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "POST /users/logOut",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/users/logOut",
+        "description": "See docs/API.md for validation rules and role requirements.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{seekerToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"flag\": \"current\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "PATCH /users/forgetPassword",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/users/forgetPassword",
+        "description": "See docs/API.md for validation rules and role requirements.",
+        "auth": {
+          "type": "noauth"
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{seekerEmail}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "PATCH /users/resetPassword",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/users/resetPassword",
+        "description": "See docs/API.md for validation rules and role requirements.",
+        "auth": {
+          "type": "noauth"
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{seekerEmail}}\",\n  \"otp\": \"{{otp}}\",\n  \"password\": \"{{newPassword}}\",\n  \"cPassword\": \"{{newPassword}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "GET /users/getProfile",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/users/getProfile",
+        "description": "See docs/API.md for validation rules and role requirements.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{seekerToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "GET /users/profile/:userId",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/users/profile/{{userId}}",
+        "description": "See docs/API.md for validation rules and role requirements.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{seekerToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "PUT /users/updateBasicInfo",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/users/updateBasicInfo",
+        "description": "See docs/API.md for validation rules and role requirements.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{seekerToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"bio\": \"Backend developer\",\n  \"location\": \"Cairo\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "POST /users/addExperiance",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/users/addExperiance",
+        "description": "See docs/API.md for validation rules and role requirements.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{seekerToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"company\": \"Example Company\",\n  \"position\": \"Backend Developer\",\n  \"startDate\": \"2025-01-01\",\n  \"isCurrent\": true\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "PUT /users/updateExperiance/:experianceId",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/users/updateExperiance/{{experianceId}}",
+        "description": "See docs/API.md for validation rules and role requirements.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{seekerToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"company\": \"Example Company\",\n  \"position\": \"Backend Developer\",\n  \"startDate\": \"2025-01-01\",\n  \"isCurrent\": true\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "DELETE /users/deleteExperiance/:experianceId",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": "{{baseUrl}}/users/deleteExperiance/{{experianceId}}",
+        "description": "See docs/API.md for validation rules and role requirements.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{seekerToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "POST /users/addEducation",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/users/addEducation",
+        "description": "See docs/API.md for validation rules and role requirements.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{seekerToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"institution\": \"Example University\",\n  \"degree\": \"Bachelor\",\n  \"fieldOfStudy\": \"Computer Science\",\n  \"startDate\": \"2022-09-01\",\n  \"isCurrent\": true\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "PUT /users/updateEducation/:educationId",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/users/updateEducation/{{educationId}}",
+        "description": "See docs/API.md for validation rules and role requirements.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{seekerToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"institution\": \"Example University\",\n  \"degree\": \"Bachelor\",\n  \"fieldOfStudy\": \"Computer Science\",\n  \"startDate\": \"2022-09-01\",\n  \"isCurrent\": true\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "DELETE /users/deleteEducation/:educationId",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": "{{baseUrl}}/users/deleteEducation/{{educationId}}",
+        "description": "See docs/API.md for validation rules and role requirements.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{seekerToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "POST /users/uploadResume",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": "{{baseUrl}}/users/uploadResume",
+        "description": "See docs/API.md for validation rules and role requirements.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{seekerToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "resume",
+              "type": "file",
+              "src": [],
+              "description": "Choose a local PDF, DOC or DOCX up to 5 MB."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "PUT /users/updateSkills",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/users/updateSkills",
+        "description": "See docs/API.md for validation rules and role requirements.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{seekerToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"skills\": [\n    \"Node.js\",\n    \"TypeScript\",\n    \"MongoDB\"\n  ]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "GET /users/getSavedJobs",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/users/getSavedJobs",
+        "description": "See docs/API.md for validation rules and role requirements.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{seekerToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "POST /users/saveJob/:jobId",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": "{{baseUrl}}/users/saveJob/{{jobId}}",
+        "description": "See docs/API.md for validation rules and role requirements.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{seekerToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "DELETE /users/removeSavedJob/:jobId",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": "{{baseUrl}}/users/removeSavedJob/{{jobId}}",
+        "description": "See docs/API.md for validation rules and role requirements.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{seekerToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "POST /jobs/create",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/jobs/create",
+        "description": "See docs/API.md for validation rules and role requirements.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{employerToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"companySnapshot\": {\n    \"name\": \"Example Company\"\n  },\n  \"title\": \"Backend Developer\",\n  \"description\": \"Build reliable recruitment APIs with Node.js, Express, TypeScript and MongoDB.\",\n  \"responsibilities\": [\n    \"Design and maintain REST APIs\"\n  ],\n  \"requirements\": [\n    \"Experience with Node.js and MongoDB\"\n  ],\n  \"preferredQualifications\": [\n    \"Knowledge of automated testing\"\n  ],\n  \"location\": \"Cairo\",\n  \"employmentType\": \"full_time\",\n  \"experienceLevel\": \"entry_level\",\n  \"salaryRange\": {\n    \"min\": 12000,\n    \"max\": 20000\n  },\n  \"skillsRequired\": [\n    \"Node.js\",\n    \"TypeScript\"\n  ],\n  \"category\": \"Engineering\",\n  \"openings\": 2,\n  \"isRemote\": false\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (pm.response.code >= 200 && pm.response.code < 300) {",
+              "  const data = pm.response.json();",
+              "  const value = data.job && data.job._id;",
+              "  if (value) pm.collectionVariables.set(\"jobId\", value);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "PUT /jobs/:jobId",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/jobs/{{jobId}}",
+        "description": "See docs/API.md for validation rules and role requirements.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{employerToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Senior Backend Developer\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "DELETE /jobs/:jobId",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": "{{baseUrl}}/jobs/{{jobId}}",
+        "description": "See docs/API.md for validation rules and role requirements.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{employerToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "DELETE /jobs/hard-delete/:jobId",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": "{{baseUrl}}/jobs/hard-delete/{{jobId}}",
+        "description": "See docs/API.md for validation rules and role requirements.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{employerToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "GET /jobs/get-all",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/jobs/get-all",
+        "description": "See docs/API.md for validation rules and role requirements.",
+        "auth": {
+          "type": "noauth"
+        }
+      }
+    },
+    {
+      "name": "GET /jobs/my-jobs",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/jobs/my-jobs",
+        "description": "See docs/API.md for validation rules and role requirements.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{employerToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "GET /jobs/:jobId",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/jobs/{{jobId}}",
+        "description": "See docs/API.md for validation rules and role requirements.",
+        "auth": {
+          "type": "noauth"
+        }
+      }
+    },
+    {
+      "name": "POST /job-applications/apply/:jobId",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": "{{baseUrl}}/job-applications/apply/{{jobId}}",
+        "description": "See docs/API.md for validation rules and role requirements.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{seekerToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "resume",
+              "type": "file",
+              "src": [],
+              "description": "Choose a local PDF, DOC or DOCX up to 5 MB."
+            },
+            {
+              "key": "coverLetter",
+              "type": "text",
+              "value": "I am interested in this role."
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (pm.response.code >= 200 && pm.response.code < 300) {",
+              "  const data = pm.response.json();",
+              "  const value = data.application && data.application._id;",
+              "  if (value) pm.collectionVariables.set(\"appId\", value);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET /job-applications/my-applications",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/job-applications/my-applications",
+        "description": "See docs/API.md for validation rules and role requirements.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{seekerToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "GET /job-applications/job/:jobId",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/job-applications/job/{{jobId}}",
+        "description": "See docs/API.md for validation rules and role requirements.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{employerToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "GET /job-applications/all",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/job-applications/all",
+        "description": "See docs/API.md for validation rules and role requirements.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{adminToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "PUT /job-applications/:appId/status",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/job-applications/{{appId}}/status",
+        "description": "See docs/API.md for validation rules and role requirements.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{employerToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"reviewed\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "DELETE /job-applications/:appId",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": "{{baseUrl}}/job-applications/{{appId}}",
+        "description": "See docs/API.md for validation rules and role requirements.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{seekerToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "GET /job-applications/stats",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/job-applications/stats",
+        "description": "See docs/API.md for validation rules and role requirements.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{seekerToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "POST /messages/send",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/messages/send",
+        "description": "See docs/API.md for validation rules and role requirements.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{seekerToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"receiverId\": \"{{receiverId}}\",\n  \"content\": \"Hello, I am interested in this role.\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (pm.response.code >= 200 && pm.response.code < 300) {",
+              "  const data = pm.response.json();",
+              "  const value = data.data && data.data._id;",
+              "  if (value) pm.collectionVariables.set(\"messageId\", value);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET /messages/conversations",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/messages/conversations",
+        "description": "See docs/API.md for validation rules and role requirements.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{seekerToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "GET /messages/conversation/:userId",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/messages/conversation/{{userId}}",
+        "description": "See docs/API.md for validation rules and role requirements.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{seekerToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "PUT /messages/:messageId/read",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": "{{baseUrl}}/messages/{{messageId}}/read",
+        "description": "See docs/API.md for validation rules and role requirements.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{seekerToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "DELETE /messages/:messageId",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": "{{baseUrl}}/messages/{{messageId}}",
+        "description": "See docs/API.md for validation rules and role requirements.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{seekerToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -1,29 +1,16 @@
 import { Request, Response, NextFunction } from "express";
-import z, { ZodType } from "zod";
-import { AppError } from "./../utils/classError";
-type ReqType = keyof Request;
-type SchemaType = Partial<Record<ReqType, ZodType>>;
+import { ZodType } from "zod";
+import { AppError } from "../utils/classError";
 
+type SchemaType = Partial<Record<"body" | "query" | "params", ZodType>>;
 export const Validation = (schema: SchemaType) => {
-  return (req: Request, res: Response, next: NextFunction) => {
-    const validationError: z.ZodError[] = [];
-    for (const key of Object.keys(schema) as ReqType[]) {
-      if (!schema[key]) continue;
-      const result = schema[key].safeParse(req[key]);
-      if (!result.success) {
-        validationError.push(result.error);
-      } else {
-        const target = (req as any)[key];
-        if (typeof target === "object" && target !== null) {
-          Object.assign(target, result.data);
-        } else {
-          (req as any)[key] = result.data;
-        }
-      }
-    }
-    if (validationError.length) {
-      const errors = validationError.flatMap((err) => err.issues);
-      throw new AppError(JSON.stringify(errors), 400);
+  return (req: Request, _res: Response, next: NextFunction) => {
+    for (const key of Object.keys(schema) as (keyof SchemaType)[]) {
+      const result = schema[key]!.safeParse(req[key]);
+      if (!result.success) throw new AppError(JSON.stringify(result.error.issues), 400);
+      // Express 5 exposes query as a getter. Keep the parsed/coerced value
+      // on this request, and discard fields stripped by the schema.
+      Object.defineProperty(req, key, { value: result.data, writable: true, configurable: true, enumerable: true });
     }
     next();
   };

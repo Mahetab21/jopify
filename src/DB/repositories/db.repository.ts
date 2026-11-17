@@ -67,6 +67,7 @@ export abstract class DbRepository < TDocument > {
     populate?: { path: string; select: string };            
   }) {
     let { page, limit = 10 } = query;
+    limit = Math.min(100, Math.max(1, Math.floor(Number(limit) || 10)));
 
     if (page < 0) page = 1;//if page is negative, set it to 1
     page = page * 1 || 1; //convert page to number and set default to 1

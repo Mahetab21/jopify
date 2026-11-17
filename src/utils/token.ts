@@ -29,7 +29,7 @@ export const VerifyToken = async ({
   token: string;
   signature: string;
 }): Promise<JwtPayload> => {
-  return jwt.verify(token, signature) as JwtPayload;
+  return jwt.verify(token, signature, { algorithms: ["HS256"] }) as JwtPayload;
 };
 
 export const GetSignature = async (
@@ -38,8 +38,8 @@ export const GetSignature = async (
 ): Promise<{ user: string; admin: string } | null> => {
   if (tokenType === TokenType.access) {
     if (
-      prefix === process.env.BEARER_USER ||
-      prefix === process.env.BEARER_ADMIN
+      prefix === (process.env.BEARER_USER || "Bearer") ||
+      prefix === (process.env.BEARER_ADMIN || "Bearer")
     ) {
       // Return both signatures to try
       return {
@@ -51,8 +51,8 @@ export const GetSignature = async (
     }
   } else if (tokenType === TokenType.refresh) {
     if (
-      prefix === process.env.BEARER_USER ||
-      prefix === process.env.BEARER_ADMIN
+      prefix === (process.env.BEARER_USER || "Bearer") ||
+      prefix === (process.env.BEARER_ADMIN || "Bearer")
     ) {
       // Return both signatures to try
       return {
@@ -88,7 +88,10 @@ export const decodedTokenAndFetchUser = async (
   if (!decoded) {
     throw lastError || new AppError("Invalid Token", 400);
   }
-  const user = await _userModel.findOne({ email: decoded.email });
+  if (typeof decoded.id !== "string" || !/^[0-9a-fA-F]{24}$/.test(decoded.id) || !decoded.iat || !decoded.jti) {
+    throw new AppError("Invalid token claims", 401);
+  }
+  const user = await _userModel.findOne({ _id: decoded.id, email: decoded.email, deletedAt: { $exists: false }, isActive: true });
   if (!user) {
     throw new AppError("User not found", 404);
   }

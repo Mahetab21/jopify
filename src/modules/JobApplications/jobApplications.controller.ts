@@ -67,3 +67,4 @@ applicationRouter.get(
 );
 
 export default applicationRouter;
+

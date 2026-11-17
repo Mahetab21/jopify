@@ -2,6 +2,12 @@ import { z } from "zod";
 import { ExperianceLevel, Status } from "../../DB/model/job.model";
 import { jobType } from "../../DB/model/user.model";
 
+// Multipart fields arrive as strings; JSON booleans/numbers remain supported.
+const formNumber = (value: unknown) =>
+  typeof value === "string" && value.trim() !== "" ? Number(value) : value;
+const formBoolean = z.union([z.boolean(), z.enum(["true", "false"])])
+  .transform(value => value === true || value === "true");
+
 // ================== Create Job Schema ==================
 export const createJobSchema = {
   body: z.strictObject({
@@ -18,8 +24,8 @@ export const createJobSchema = {
     employmentType: z.enum(Object.values(jobType) as [string, ...string[]]),
     experienceLevel: z.enum(Object.values(ExperianceLevel) as [string, ...string[]]),
     salaryRange: z.object({
-      min: z.number().min(0).optional(),
-      max: z.number().min(0).optional(),
+      min: z.preprocess(formNumber, z.number().min(0)).optional(),
+      max: z.preprocess(formNumber, z.number().min(0)).optional(),
     }).optional().refine(
       (data) => {
         if (!data) return true;
@@ -28,11 +34,11 @@ export const createJobSchema = {
       },
       { message: "Min salary must be <= max salary" }
     ),
-    applicationDeadline: z.coerce.date().min(new Date()).optional(),
+    applicationDeadline: z.coerce.date().refine(date => date.getTime() > Date.now(), "Deadline must be in the future").optional(),
     skillsRequired: z.array(z.string().min(2).max(50).trim()).min(1).max(20),
     category: z.string().min(2).max(100).trim(),
-    openings: z.number().int().min(1).max(100),
-    isRemote: z.boolean().default(false),
+    openings: z.preprocess(formNumber, z.number().int().min(1).max(100)),
+    isRemote: formBoolean.default(false),
   }),
 };
 // ================== Update Job Schema ==================
@@ -44,6 +50,7 @@ export const updateJobSchema = {
       .regex(/^[0-9a-f]{24}$/, "Invalid job ID format"),
   }),
   body: createJobSchema.body
+  .extend({ isRemote: formBoolean.optional() })
   .omit({
     applicationDeadline: true, // prevent changing deadline to past date
   })
@@ -108,7 +115,7 @@ export const getJobsQuerySchema = {
       .optional(),
     minSalary: z.coerce.number().min(0).optional(),
     maxSalary: z.coerce.number().min(0).optional(),
-    status: z.enum(Object.values(Status) as [string, ...string[]]).optional(),
+    status: z.literal(Status.active).optional(),
     sortBy: z
       .enum(["createdAt", "salaryRange.max", "applicationsCount"])
       .default("createdAt")

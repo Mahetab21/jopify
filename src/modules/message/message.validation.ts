@@ -6,7 +6,7 @@ export const sendMessageSchema = {
       .string()
       .length(24, "Invalid user ID format")
       .regex(/^[0-9a-f]{24}$/, "Invalid user ID format"),
-    content: z.string().min(1, "Message cannot be empty").max(1000).trim(),
+    content: z.string().trim().min(1, "Message cannot be empty").max(1000),
   }),
 };
 //================== Get Conversations Schema ==================
