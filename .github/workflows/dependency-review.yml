@@ -1,0 +1,30 @@
+name: Dependency review
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dependency-review.yml']
+permissions:
+  contents: read
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Prepare compatible security updates in the temporary checkout
+        run: npm audit fix
+        continue-on-error: true
+      - name: Report remaining advisories
+        shell: bash
+        run: |
+          npm audit --json > "$RUNNER_TEMP/jobify-audit.json" || true
+          node -e 'const fs=require("fs"); const a=JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP+"/jobify-audit.json","utf8")); console.log("AUDIT_REPORT_START"); console.log(JSON.stringify({metadata:a.metadata,error:a.error,vulnerabilities:a.vulnerabilities})); console.log("AUDIT_REPORT_END")'
+      - run: npm run check
+      - name: Export verified lockfile for manual review
+        run: |
+          node -e 'const fs=require("fs"); console.log("LOCKFILE_START"); console.log(fs.readFileSync("package-lock.json","utf8")); console.log("LOCKFILE_END"); console.log("MANIFEST_START"); console.log(fs.readFileSync("package.json","utf8")); console.log("MANIFEST_END")'
